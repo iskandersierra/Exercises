@@ -26,6 +26,9 @@ public class ProblemRunner(
 
         if (solvers is []) return 1;
 
+        ModelsExtensions.PrintItem(input, console);
+        console.WriteLine();
+
         foreach (var solver in solvers)
         {
             ModelsExtensions.PrintItem(solver, console);
@@ -55,6 +58,7 @@ public class ProblemRunner(
                 var watch = Stopwatch.StartNew();
                 var output = outputSolver.Solve(input);
                 watch.Stop();
+
                 // print
                 console.MarkupLine($"[bold]Output:[/]");
                 output.PrintTo(console);

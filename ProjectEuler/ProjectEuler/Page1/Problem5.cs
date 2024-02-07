@@ -1,21 +1,21 @@
-﻿using Exercises;
+using Exercises;
 using Spectre.Console;
 using System.Text.RegularExpressions;
 
 namespace ProjectEuler.Page1;
 
-public static partial class Problem3
+public static partial class Problem5
 {
     private static readonly Lazy<IProblem> instance = new(() => new Problem(
-        "problem3",
-        "Largest Prime Factor",
+        "problem5",
+        "Smallest Multiple",
         GetInputParsers,
         GetSolvers,
         """
-        The prime factors of 13195 are 5, 7, 13 and 29.
-        What is the largest prime factor of the number 600851475143?
+        2520 is the smallest number that can be divided by each of the numbers from 1 to 10 without any remainder.
+        What is the smallest positive number that is evenly divisible by all of the numbers from 1 to 20?
         """,
-        new Uri("https://projecteuler.net/problem=3")
+        new Uri("https://projecteuler.net/problem=5")
     ));
 
     public static IProblem Instance => instance.Value;
@@ -28,10 +28,10 @@ public static partial class Problem3
 
     private static IEnumerable<IProblemSolver> GetSolvers()
     {
-        yield return new Solver();
+        yield return new NaiveSolver();
     }
 
-    public record Input(long Number) : IProblemInput;
+    public record Input(int MaxValue) : IProblemInput;
 
     [GeneratedRegex(@"^\s*((?<num>\d+)\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -40,29 +40,29 @@ public static partial class Problem3
         ProblemInputParser(
             "string",
             "String input",
-            "Parses a string in the format: [num=13195]. E.g. 1024, 13195"),
+            "Parses a string in the format: [num=10]. E.g. 10, 20"),
         IProblemStringInputParser
     {
         public IProblemInput? Parse(IAnsiConsole console, string input)
         {
-            if (GetInputRegex().Match(input) is not {Success: true} match)
+            if (GetInputRegex().Match(input) is not { Success: true } match)
             {
                 console.MarkupLine("[red]Input is in an invalid format.[/]");
                 return null;
             }
 
             if (match.Groups["num"] is not { Success: true, Value: { } numberValue })
-                return new Input(13195);
+                return new Input(10);
 
-            if (!long.TryParse(numberValue, out var number))
+            if (!int.TryParse(numberValue, out var number))
             {
-                console.MarkupLine("[red]Number is not a valid integer.[/]");
+                console.MarkupLine("[red]Must be a valid integer.[/]");
                 return null;
             }
 
             if (number < 1)
             {
-                console.MarkupLine("[red]Number must be a positive integer.[/]");
+                console.MarkupLine("[red]Must be a positive integer.[/]");
                 return null;
             }
 
@@ -80,9 +80,9 @@ public static partial class Problem3
         public IProblemInput? Prompt(IAnsiConsole console)
         {
             var maxValue = console.Prompt(
-                new TextPrompt<long>("Number:")
-                    .DefaultValue(13195)
-                    .ValidationErrorMessage("Must be an integer.")
+                new TextPrompt<int>("Number:")
+                    .DefaultValue(10)
+                    .ValidationErrorMessage("Must be a valid integer.")
                     .Validate(max => max switch
                     {
                         < 1 => ValidationResult.Error("Must be a positive integer."),
@@ -95,20 +95,34 @@ public static partial class Problem3
 
     public record Output(int LargestPrime) : IProblemOutput;
 
-    public class Solver() :
+    public class NaiveSolver() :
         ProblemSolver(
-            "solver",
-            "Solver",
-            "Solves the problem."),
+            "naive",
+            "Naive solver",
+            "Solves the problem using a naive algorithm."),
         IProblemOutputSolver
     {
         public IProblemOutput Solve(IProblemInput problemInput)
         {
             var input = (Input)problemInput;
 
-            var largestPrime = Primes.GetPrimeFactors(input.Number).Last();
+            var minNumber = 2;
+            var maxNumber = input.MaxValue;
 
-            return new Output(largestPrime);
+            var factors = Enumerable
+                .Range(minNumber, maxNumber - minNumber + 1)
+                .SelectMany(x => Primes
+                    .GetPrimeFactors(x)
+                    .GroupBy(f => f)
+                    .Select(g => (Prime: g.Key, Power: g.Count())))
+                .GroupBy(x => x.Prime)
+                .Select(g => (Prime: g.Key, Power: g.Select(e => e.Power).Max()))
+                .ToArray();
+
+            var result = factors
+                .Aggregate(1L, (acc, x) => acc * (long)Math.Pow(x.Prime, x.Power));
+
+            return new Output((int)result);
         }
     }
 }
