@@ -54,7 +54,7 @@ public static partial class Problem3
             if (match.Groups["num"] is not { Success: true, Value: { } numberValue })
                 return new Input(4000000);
 
-            if (!int.TryParse(numberValue, out var number))
+            if (!long.TryParse(numberValue, out var number))
             {
                 console.MarkupLine("[red]Number is not a valid integer.[/]");
                 return null;
@@ -80,7 +80,7 @@ public static partial class Problem3
         public IProblemInput? Prompt(IAnsiConsole console)
         {
             var maxValue = console.Prompt(
-                new TextPrompt<int>("Number:")
+                new TextPrompt<long>("Number:")
                     .DefaultValue(13195)
                     .ValidationErrorMessage("Must be an integer.")
                     .Validate(max => max switch
@@ -106,17 +106,7 @@ public static partial class Problem3
         {
             var input = (Input)problemInput;
 
-            var remaining = input.Number;
-            var largestPrime = 0;
-
-            foreach (var prime in Primes.GetPrimes())
-            {
-                while (Math.DivRem(remaining, prime, out var remainder) is var quotient && remainder == 0)
-                {
-                    remaining = quotient;
-                    largestPrime = prime;
-                }
-            }
+            var largestPrime = Primes.GetPrimeFactors(input.Number).Last();
 
             return new Output(largestPrime);
         }
