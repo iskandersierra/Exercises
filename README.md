@@ -1,5 +1,10 @@
 # Exercises
 
+| Source                                      | Problems    | Notes |
+| ------------------------------------------- | ----------- | ----- |
+| [Project Euler](https://projecteuler.net/)  | 865         |       |
+| [Advent of Code](https://adventofcode.com/) | 25 per year |       |
+
 > NOTE: Possible problem sources are:
 >
 > - Project Euler: https://projecteuler.net/
