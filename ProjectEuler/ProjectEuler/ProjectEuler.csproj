@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Exercises\Exercises.csproj" />
-    <ProjectReference Include="..\ProjectEuler.Page1\ProjectEuler.Page1.csproj" />
   </ItemGroup>
 
 </Project>

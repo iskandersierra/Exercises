@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ProjectEuler\ProjectEuler.Page1\ProjectEuler.Page1.csproj" />
     <ProjectReference Include="..\ProjectEuler\ProjectEuler\ProjectEuler.csproj" />
   </ItemGroup>
 

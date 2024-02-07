@@ -18,6 +18,7 @@ public static class Page1Category
     {
         yield return Problem1.Instance;
         yield return Problem2.Instance;
+        yield return Problem3.Instance;
         
         yield return Problem50.Instance;
     }

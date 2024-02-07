@@ -54,6 +54,33 @@ public static class Primes
         return true;
     }
 
+    public static IEnumerable<int> GetPrimes()
+    {
+        List<int> primes = [ 2, 3 ];
+
+        foreach (var prime in primes)
+        {
+            yield return prime;
+        }
+
+        for (int t = 1;; t++)
+        {
+            var candidate = 6 * t - 1;
+            if (IsPrimeFor(candidate, primes))
+            {
+                primes.Add(candidate);
+                yield return candidate;
+            }
+
+            candidate += 2;
+            if (IsPrimeFor(candidate, primes))
+            {
+                primes.Add(candidate);
+                yield return candidate;
+            }
+        }
+    }
+
     public static List<int> GetPrimesBelow(int below, bool inclusive = true)
     {
         var last = inclusive ? below : below - 1;
