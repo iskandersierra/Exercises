@@ -45,7 +45,12 @@ public class ProblemRunner(
             case IProblemOutputSolver outputSolver:
             {
                 // warm up
-                outputSolver.Solve(input);
+                if (config.WarmUp > 0)
+                {
+                    for (var i = 0; i < config.WarmUp; i++)
+                        outputSolver.Solve(input);
+                }
+
                 // measure
                 var watch = Stopwatch.StartNew();
                 var output = outputSolver.Solve(input);
@@ -72,6 +77,7 @@ public class ProblemRunner(
         public string? Problem { get; set; }
         public string? Parser { get; set; }
         public string? Input { get; set; }
-        public string[] Solvers { get; set; }
+        public string[] Solvers { get; set; } = Array.Empty<string>();
+        public int WarmUp { get; set; }
     }
 }

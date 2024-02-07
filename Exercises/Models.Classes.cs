@@ -1,4 +1,5 @@
 ﻿using Spectre.Console;
+using System;
 
 namespace Exercises;
 
@@ -12,22 +13,38 @@ public abstract class Describable(
     public string Title { get; } = title;
     public string? Summary { get; } = summary;
     public Uri? MainLink { get; } = mainLink;
-    public virtual void PrintSummary(IAnsiConsole console, string indent = "")
+    
+    public virtual void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
     {
-        console.Write(indent);
+        options ??= PrintSummaryOptions.Default;
+
+        PrintTitleComponent(console, options);
+        PrintSummaryComponent(console, options);
+        PrintLinkComponent(console, options);
+    }
+
+    protected virtual void PrintTitleComponent(IAnsiConsole console, PrintSummaryOptions options)
+    {
+        console.Write(options.Indent);
         console.Write(new Markup(Title, new Style(Color.Black, Color.Aqua)));
         console.WriteLine();
+    }
 
-        if (!string.IsNullOrWhiteSpace(Summary))
+    protected virtual void PrintSummaryComponent(IAnsiConsole console, PrintSummaryOptions options)
+    {
+        if (options.Summary && !string.IsNullOrWhiteSpace(Summary))
         {
-            console.Write(indent);
+            console.Write(options.Indent);
             console.Write(new Markup(Summary, new Style(Color.Grey)));
             console.WriteLine();
         }
+    }
 
-        if (MainLink != null)
+    protected virtual void PrintLinkComponent(IAnsiConsole console, PrintSummaryOptions options)
+    {
+        if (options.Link && MainLink != null)
         {
-            console.Write(indent);
+            console.Write(options.Indent);
             console.Write(new Markup(MainLink.ToString(), new Style(Color.Aqua, decoration: Decoration.Underline)));
             console.WriteLine();
         }
@@ -44,27 +61,13 @@ public abstract class DescribableWithKeyword(
 {
     public string Keyword { get; } = keyword;
 
-    public override void PrintSummary(IAnsiConsole console, string indent = "")
+    protected override void PrintTitleComponent(IAnsiConsole console, PrintSummaryOptions options)
     {
-        console.Write(indent);
+        console.Write(options.Indent);
         console.Write(new Markup(Keyword, new Style(Color.Green)));
         console.Write(": ");
         console.Write(new Markup(Title, new Style(Color.Black, Color.Aqua)));
         console.WriteLine();
-
-        if (!string.IsNullOrWhiteSpace(Summary))
-        {
-            console.Write(indent);
-            console.Write(new Markup(Summary, new Style(Color.Grey)));
-            console.WriteLine();
-        }
-
-        if (MainLink != null)
-        {
-            console.Write(indent);
-            console.Write(new Markup(MainLink.ToString(), new Style(Color.Aqua, decoration: Decoration.Underline)));
-            console.WriteLine();
-        }
     }
 }
 

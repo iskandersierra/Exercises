@@ -267,16 +267,18 @@ public static class ModelsExtensions
             .PrompForSelectableItems(console, preselectedSolvers, "solvers");
     }
 
-    public static void PrintItem(object item, IAnsiConsole console, string indent = "")
+    public static void PrintItem(object item, IAnsiConsole console, PrintSummaryOptions? options = null)
     {
+        options ??= new PrintSummaryOptions();
+
         switch (item)
         {
             case IHasPrintSummary printSummary:
-                printSummary.PrintSummary(console, indent);
+                printSummary.PrintSummary(console, options);
                 break;
 
             default:
-                console.Write(indent);
+                console.Write(options.Indent);
                 console.WriteLine($"{item}");
                 break;
         }

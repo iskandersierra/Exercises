@@ -7,9 +7,17 @@ public interface IHasKeyword
     string Keyword { get; }
 }
 
+public record PrintSummaryOptions(
+    bool Summary = false,
+    bool Link = false,
+    string Indent = "")
+{
+    public static readonly PrintSummaryOptions Default = new();
+}
+
 public interface IHasPrintSummary
 {
-    void PrintSummary(IAnsiConsole console, string indent = "");
+    void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null);
 }
 
 public interface IDescribable

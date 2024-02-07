@@ -1,4 +1,5 @@
-﻿using Exercises;
+﻿using System.ComponentModel;
+using Exercises;
 using ProjectEuler;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -33,6 +34,10 @@ public class SolveCommand : Command<SolveCommand.Settings>
 
         [CommandOption("-s|--solver")]
         public string[]? Solvers { get; set; }
+
+        [CommandOption("-w|--warm-up")]
+        [DefaultValue(0)]
+        public int WarmUp { get; set; }
     }
 
     public override int Execute(CommandContext context, Settings settings)
@@ -45,6 +50,7 @@ public class SolveCommand : Command<SolveCommand.Settings>
             Parser = settings.Parser,
             Input = settings.Input,
             Solvers = settings.Solvers ?? [],
+            WarmUp = settings.WarmUp,
         };
 
         var runner = new ProblemRunner(
@@ -60,13 +66,23 @@ public class PrintCommand : Command<PrintCommand.Settings>
 {
     public class Settings : CommandSettings
     {
+        [CommandOption("-s|--summary")]
+        public bool Summary { get; set; }
+
+        [CommandOption("-l|--link")]
+        public bool Link { get; set; }
     }
 
     public override int Execute(CommandContext context, Settings settings)
     {
+        var options = new PrintSummaryOptions(
+            Summary: settings.Summary,
+            Link: settings.Link);
+
         var runner = new PrintProblemsRunner(
             ProblemSourceProvider.Instance,
-            AnsiConsole.Console);
+            AnsiConsole.Console,
+            options);
 
         return runner.Run();
     }
