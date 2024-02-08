@@ -23,6 +23,7 @@ public static class Page1Category
         yield return Problem5.Instance;
         yield return Problem6.Instance;
         yield return Problem7.Instance;
+        yield return Problem8.Instance;
 
         yield return Problem50.Instance;
     }

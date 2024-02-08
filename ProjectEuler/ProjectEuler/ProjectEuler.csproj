@@ -7,6 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Page1\Problem8.question.txt" />
+    <None Remove="Page1\Problem8.sample.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Page1\Problem8.question.txt" />
+    <EmbeddedResource Include="Page1\Problem8.sample.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Exercises\Exercises.csproj" />
   </ItemGroup>
 
