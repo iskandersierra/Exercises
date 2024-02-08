@@ -13,7 +13,7 @@ public static class Page1Category
     ));
 
     public static IProblemCategory Instance => instance.Value;
-    
+
     private static IEnumerable<IProblem> GetProblems()
     {
         yield return Problem1.Instance;
@@ -21,7 +21,9 @@ public static class Page1Category
         yield return Problem3.Instance;
         yield return Problem4.Instance;
         yield return Problem5.Instance;
-        
+        yield return Problem6.Instance;
+        yield return Problem7.Instance;
+
         yield return Problem50.Instance;
     }
 }
