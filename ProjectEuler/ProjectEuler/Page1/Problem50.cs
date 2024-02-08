@@ -141,7 +141,7 @@ public static partial class Problem50
         {
             var input = (Input)problemInput;
 
-            var primes = Primes.GetPrimesBelow(input.Below, inclusive: false);
+            var primes = Numbers.GetPrimesBelow(input.Below, inclusive: false);
 
             var longestStart = 0;
             var longestLength = 1;

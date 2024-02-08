@@ -4,19 +4,22 @@ using System.Text.RegularExpressions;
 
 namespace ProjectEuler.Page1;
 
-public static partial class Problem5
+public static partial class Problem9
 {
     private static readonly Lazy<IProblem> instance = new(() => new Problem(
-        "problem5",
-        "Smallest Multiple",
+        "problem9",
+        "Special Pythagorean triplet",
         GetInputParsers,
         GetInputSources,
         GetSolvers,
         """
-        2520 is the smallest number that can be divided by each of the numbers from 1 to 10 without any remainder.
-        What is the smallest positive number that is evenly divisible by all of the numbers from 1 to 20?
+        A Pythagorean triplet is a set of three natural numbers, a < b < c, for which,
+        a^2 + b^2 = c^2
+        For example, 3^2 + 4^2 = 9 + 16 = 25 = 5^2.
+        There exists exactly one Pythagorean triplet for which a + b + c = 1000.
+        Find the product abc.
         """,
-        new Uri("https://projecteuler.net/problem=5")
+        new Uri("https://projecteuler.net/problem=9")
     ));
 
     public static IProblem Instance => instance.Value;
@@ -31,15 +34,15 @@ public static partial class Problem5
     {
         yield return new ProblemInputStringSource(
             "sample",
-            "Smallest number divisible by numbers from 1 to 10",
-            "10",
-            expectedOutput: new Output(2520));
+            "Pythagorean triplet for which a + b + c = 12",
+            "12",
+            expectedOutput: new Output(60, 3, 4, 5));
 
         yield return new ProblemInputStringSource(
             "question",
-            "Smallest number divisible by numbers from 1 to 20",
-            "20",
-            expectedOutput: new Output(232792560));
+            "Pythagorean triplet for which a + b + c = 1000",
+            "1000",
+            expectedOutput: new Output(31875000, 200, 375, 425));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
@@ -47,12 +50,12 @@ public static partial class Problem5
         yield return new Solver();
     }
 
-    public record Input(int MaxValue) : IProblemInput, IHasPrintSummary
+    public record Input(int Number) : IProblemInput, IHasPrintSummary
     {
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> Find the smallest positive number that is evenly divisible by all of the numbers from [green]1[/] to [green]{MaxValue}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> Find the Pythagorean triplet for which [green]a + b + c = {Number}[/].");
         }
     }
 
@@ -63,19 +66,19 @@ public static partial class Problem5
         ProblemInputParser(
             "string",
             "String input",
-            "Parses a string in the format: [num=10]. E.g. 10, 20"),
+            "Parses a string in the format: [num=6]. E.g. 6, 10001"),
         IProblemStringInputParser
     {
         public IProblemInput? Parse(IAnsiConsole console, string input)
         {
-            if (GetInputRegex().Match(input) is not { Success: true } match)
+            if (GetInputRegex().Match(input) is not {Success: true} match)
             {
                 console.MarkupLine("[red]Input is in an invalid format.[/]");
                 return null;
             }
 
             if (match.Groups["num"] is not { Success: true, Value: { } numberValue })
-                return new Input(10);
+                return new Input(12);
 
             if (!int.TryParse(numberValue, out var number))
             {
@@ -83,9 +86,9 @@ public static partial class Problem5
                 return null;
             }
 
-            if (number < 1)
+            if (number < 12)
             {
-                console.MarkupLine("[red]Must be a positive integer.[/]");
+                console.MarkupLine("[red]Must be at least 12.[/]");
                 return null;
             }
 
@@ -104,11 +107,11 @@ public static partial class Problem5
         {
             var maxValue = console.Prompt(
                 new TextPrompt<int>("Number:")
-                    .DefaultValue(10)
+                    .DefaultValue(12)
                     .ValidationErrorMessage("Must be a valid integer.")
                     .Validate(max => max switch
                     {
-                        < 1 => ValidationResult.Error("Must be a positive integer."),
+                        < 12 => ValidationResult.Error("Must be at least 12."),
                         _ => ValidationResult.Success()
                     }));
 
@@ -116,12 +119,12 @@ public static partial class Problem5
         }
     }
 
-    public record Output(int LargestPrime) : IProblemOutput, IHasPrintSummary
+    public record Output(int Product, int A, int B, int C) : IProblemOutput, IHasPrintSummary
     {
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> The smallest positive number is [green]{LargestPrime}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> The Pythagorean triplet is [green]{A}, {B}, {C}[/] with a product of [green]{Product}[/].");
         }
     }
 
@@ -129,30 +132,26 @@ public static partial class Problem5
         ProblemSolver(
             "solver",
             "Solver",
-            "Solves the problem using a naive algorithm."),
+            "Solves the problem."),
         IProblemOutputSolver
     {
         public IProblemOutput Solve(IProblemInput problemInput)
         {
             var input = (Input)problemInput;
 
-            var minNumber = 2;
-            var maxNumber = input.MaxValue;
+            for (var a = 1; a < input.Number; a++)
+            {
+                for (var b = a + 1; b < input.Number; b++)
+                {
+                    var c = input.Number - a - b;
+                    if (a * a + b * b == c * c)
+                    {
+                        return new Output(a * b * c, a, b, c);
+                    }
+                }
+            }
 
-            var factors = Enumerable
-                .Range(minNumber, maxNumber - minNumber + 1)
-                .SelectMany(x => Numbers
-                    .GetPrimeFactors(x)
-                    .GroupBy(f => f)
-                    .Select(g => (Prime: g.Key, Power: g.Count())))
-                .GroupBy(x => x.Prime)
-                .Select(g => (Prime: g.Key, Power: g.Select(e => e.Power).Max()))
-                .ToArray();
-
-            var result = factors
-                .Aggregate(1L, (acc, x) => acc * (long)Math.Pow(x.Prime, x.Power));
-
-            return new Output((int)result);
+            return new Output(0, 0, 0, 0);
         }
     }
 }

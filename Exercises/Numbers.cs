@@ -1,7 +1,11 @@
-﻿namespace Exercises;
+﻿using System.Numerics;
 
-public static class Primes
+namespace Exercises;
+
+public static class Numbers
 {
+    #region [ Primes ]
+
     public static long MaximumCommonFactor(long a, long b)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(a);
@@ -90,7 +94,7 @@ public static class Primes
 
     public static IEnumerable<int> GetPrimesInt()
     {
-        List<int> primes = [ 2, 3 ];
+        List<int> primes = [2, 3];
 
         foreach (var prime in primes)
         {
@@ -114,10 +118,10 @@ public static class Primes
             }
         }
     }
-    
+
     public static IEnumerable<long> GetPrimes()
     {
-        List<long> primes = [ 2, 3 ];
+        List<long> primes = [2, 3];
 
         foreach (var prime in primes)
         {
@@ -162,7 +166,7 @@ public static class Primes
 
         return FillPrimesInt(estimatedCapacity, primes => primes[^1] < last);
     }
-    
+
     public static List<long> GetPrimesBelow(long below, bool inclusive = true)
     {
         var last = inclusive ? below : below - 1;
@@ -200,7 +204,7 @@ public static class Primes
 
         return FillPrimesInt(amount, primes => primes.Count < amount);
     }
-    
+
     public static List<long> GetFirstPrimes(int amount)
     {
         switch (amount)
@@ -268,7 +272,6 @@ public static class Primes
         return primes;
     }
 
-
     public static IEnumerable<int> GetPrimeFactors(long number)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(number);
@@ -285,5 +288,42 @@ public static class Primes
 
             if (remaining == 1) break;
         }
+    }
+
+    #endregion [ Primes ]
+
+    public static long Factorial(int number)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(number);
+
+        if (number == 0) return 1;
+
+        var result = 1L;
+
+        checked
+        {
+            for (var i = 1; i <= number; i++)
+            {
+                result *= i;
+            }
+        }
+
+        return result;
+    }
+
+    public static BigInteger FactorialBig(int number)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(number);
+
+        if (number == 0) return 1;
+
+        var result = BigInteger.One;
+
+        for (var i = 1; i <= number; i++)
+        {
+            result *= i;
+        }
+
+        return result;
     }
 }

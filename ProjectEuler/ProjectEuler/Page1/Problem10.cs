@@ -4,19 +4,19 @@ using System.Text.RegularExpressions;
 
 namespace ProjectEuler.Page1;
 
-public static partial class Problem5
+public static partial class Problem10
 {
     private static readonly Lazy<IProblem> instance = new(() => new Problem(
-        "problem5",
-        "Smallest Multiple",
+        "problem10",
+        "Summation of primes",
         GetInputParsers,
         GetInputSources,
         GetSolvers,
         """
-        2520 is the smallest number that can be divided by each of the numbers from 1 to 10 without any remainder.
-        What is the smallest positive number that is evenly divisible by all of the numbers from 1 to 20?
+        The sum of the primes below 10 is 2 + 3 + 5 + 7 = 17.
+        Find the sum of all the primes below two million.
         """,
-        new Uri("https://projecteuler.net/problem=5")
+        new Uri("https://projecteuler.net/problem=10")
     ));
 
     public static IProblem Instance => instance.Value;
@@ -31,15 +31,15 @@ public static partial class Problem5
     {
         yield return new ProblemInputStringSource(
             "sample",
-            "Smallest number divisible by numbers from 1 to 10",
+            "Sum of the primes below 10",
             "10",
-            expectedOutput: new Output(2520));
+            expectedOutput: new Output(17));
 
         yield return new ProblemInputStringSource(
             "question",
-            "Smallest number divisible by numbers from 1 to 20",
-            "20",
-            expectedOutput: new Output(232792560));
+            "Sum of the primes below two million",
+            "2000000",
+            expectedOutput: new Output(142913828922L));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
@@ -47,12 +47,12 @@ public static partial class Problem5
         yield return new Solver();
     }
 
-    public record Input(int MaxValue) : IProblemInput, IHasPrintSummary
+    public record Input(int Number) : IProblemInput, IHasPrintSummary
     {
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> Find the smallest positive number that is evenly divisible by all of the numbers from [green]1[/] to [green]{MaxValue}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> Find the sum of all the primes below [green]{Number}[/].");
         }
     }
 
@@ -63,12 +63,12 @@ public static partial class Problem5
         ProblemInputParser(
             "string",
             "String input",
-            "Parses a string in the format: [num=10]. E.g. 10, 20"),
+            "Parses a string in the format: [num=10]. E.g. 10, 1000000"),
         IProblemStringInputParser
     {
         public IProblemInput? Parse(IAnsiConsole console, string input)
         {
-            if (GetInputRegex().Match(input) is not { Success: true } match)
+            if (GetInputRegex().Match(input) is not {Success: true} match)
             {
                 console.MarkupLine("[red]Input is in an invalid format.[/]");
                 return null;
@@ -116,12 +116,12 @@ public static partial class Problem5
         }
     }
 
-    public record Output(int LargestPrime) : IProblemOutput, IHasPrintSummary
+    public record Output(long Sum) : IProblemOutput, IHasPrintSummary
     {
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> The smallest positive number is [green]{LargestPrime}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> The sum of primes is [green]{Sum}[/].");
         }
     }
 
@@ -129,30 +129,16 @@ public static partial class Problem5
         ProblemSolver(
             "solver",
             "Solver",
-            "Solves the problem using a naive algorithm."),
+            "Solves the problem."),
         IProblemOutputSolver
     {
         public IProblemOutput Solve(IProblemInput problemInput)
         {
             var input = (Input)problemInput;
 
-            var minNumber = 2;
-            var maxNumber = input.MaxValue;
+            var sum = Numbers.GetPrimes().TakeWhile(p => p < input.Number).Sum();
 
-            var factors = Enumerable
-                .Range(minNumber, maxNumber - minNumber + 1)
-                .SelectMany(x => Numbers
-                    .GetPrimeFactors(x)
-                    .GroupBy(f => f)
-                    .Select(g => (Prime: g.Key, Power: g.Count())))
-                .GroupBy(x => x.Prime)
-                .Select(g => (Prime: g.Key, Power: g.Select(e => e.Power).Max()))
-                .ToArray();
-
-            var result = factors
-                .Aggregate(1L, (acc, x) => acc * (long)Math.Pow(x.Prime, x.Power));
-
-            return new Output((int)result);
+            return new Output(sum);
         }
     }
 }

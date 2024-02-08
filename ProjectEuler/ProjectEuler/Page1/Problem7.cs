@@ -137,7 +137,7 @@ public static partial class Problem7
         {
             var input = (Input)problemInput;
 
-            var nthPrime = Primes.GetPrimes().Skip(input.Number - 1).First();
+            var nthPrime = Numbers.GetPrimes().Skip(input.Number - 1).First();
             return new Output(nthPrime);
         }
     }

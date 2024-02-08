@@ -103,7 +103,7 @@ public static partial class Problem1
 
             if (match.Groups["prime2"] is not { Success: true, Value: { } prime2Value })
             {
-                if (!Primes.AreRelativePrimes(prime1, 5))
+                if (!Numbers.AreRelativePrimes(prime1, 5))
                 {
                     console.MarkupLine("[red]{0} and 5 are not relative primes.[/]", prime1);
                     return null;
@@ -118,7 +118,7 @@ public static partial class Problem1
                 return null;
             }
 
-            if (!Primes.AreRelativePrimes(prime1, prime2))
+            if (!Numbers.AreRelativePrimes(prime1, prime2))
             {
                 console.MarkupLine("[red]{0} and {1} are not relative primes.[/]", prime1, prime2);
                 return null;
@@ -165,7 +165,7 @@ public static partial class Problem1
                     {
                         < 1 =>
                             ValidationResult.Error("Must be a positive integer."),
-                        _ when !Primes.AreRelativePrimes(prime1, prime2) =>
+                        _ when !Numbers.AreRelativePrimes(prime1, prime2) =>
                             ValidationResult.Error("Must be relative primes."),
                         _ => ValidationResult.Success()
                     }));

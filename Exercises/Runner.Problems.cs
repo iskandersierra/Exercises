@@ -65,6 +65,18 @@ public class ProblemRunner(
                 break;
             }
 
+            case IProblemConsoleSolver outputSolver:
+            {
+                // measure
+                var watch = Stopwatch.StartNew();
+                outputSolver.Solve(input);
+                watch.Stop();
+
+                // print
+                console.MarkupLineInterpolated($"[yellow]{watch.Elapsed.ToPreciseString()}[/]");
+                break;
+            }
+
             default:
             {
                 console.MarkupLine($"[red]Unsupported solver: {solver.GetType().FullName}[/]");

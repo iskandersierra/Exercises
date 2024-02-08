@@ -89,3 +89,7 @@ public interface IProblemOutputSolver : IProblemSolver
 {
     IProblemOutput Solve(IProblemInput input);
 }
+public interface IProblemConsoleSolver : IProblemSolver
+{
+    void Solve(IProblemInput input);
+}

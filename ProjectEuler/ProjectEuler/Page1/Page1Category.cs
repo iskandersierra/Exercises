@@ -24,6 +24,12 @@ public static class Page1Category
         yield return Problem6.Instance;
         yield return Problem7.Instance;
         yield return Problem8.Instance;
+        yield return Problem9.Instance;
+        yield return Problem10.Instance;
+        
+        yield return Problem20.Instance;
+        
+        yield return Problem30.Instance;
 
         yield return Problem50.Instance;
     }

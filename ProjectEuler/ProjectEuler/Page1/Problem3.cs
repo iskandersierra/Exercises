@@ -136,7 +136,7 @@ public static partial class Problem3
         {
             var input = (Input)problemInput;
 
-            var largestPrime = Primes.GetPrimeFactors(input.Number).Last();
+            var largestPrime = Numbers.GetPrimeFactors(input.Number).Last();
 
             return new Output(largestPrime);
         }

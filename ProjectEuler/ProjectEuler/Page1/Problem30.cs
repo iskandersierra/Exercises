@@ -4,19 +4,24 @@ using System.Text.RegularExpressions;
 
 namespace ProjectEuler.Page1;
 
-public static partial class Problem5
+public static partial class Problem30
 {
     private static readonly Lazy<IProblem> instance = new(() => new Problem(
-        "problem5",
-        "Smallest Multiple",
+        "problem30",
+        "Digit fifth powers",
         GetInputParsers,
         GetInputSources,
         GetSolvers,
         """
-        2520 is the smallest number that can be divided by each of the numbers from 1 to 10 without any remainder.
-        What is the smallest positive number that is evenly divisible by all of the numbers from 1 to 20?
+        Surprisingly there are only three numbers that can be written as the sum of fourth powers of their digits:
+        1634 = 1^4 + 6^4 + 3^4 + 4^4
+        8208 = 8^4 + 2^4 + 0^4 + 8^4
+        9474 = 9^4 + 4^4 + 7^4 + 4^4
+        As 1 = 1^4 is not a sum it is not included.
+        The sum of these numbers is 1634 + 8208 + 9474 = 19316.
+        Find the sum of all the numbers that can be written as the sum of fifth powers of their digits.
         """,
-        new Uri("https://projecteuler.net/problem=5")
+        new Uri("https://projecteuler.net/problem=30")
     ));
 
     public static IProblem Instance => instance.Value;
@@ -31,15 +36,15 @@ public static partial class Problem5
     {
         yield return new ProblemInputStringSource(
             "sample",
-            "Smallest number divisible by numbers from 1 to 10",
-            "10",
-            expectedOutput: new Output(2520));
+            "Numbers that can be written as the sum of fourth powers of their digits",
+            "4",
+            expectedOutput: new Output(27));
 
         yield return new ProblemInputStringSource(
             "question",
-            "Smallest number divisible by numbers from 1 to 20",
-            "20",
-            expectedOutput: new Output(232792560));
+            "Numbers that can be written as the sum of fifth powers of their digits",
+            "5",
+            expectedOutput: new Output(648));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
@@ -47,12 +52,12 @@ public static partial class Problem5
         yield return new Solver();
     }
 
-    public record Input(int MaxValue) : IProblemInput, IHasPrintSummary
+    public record Input(int Number) : IProblemInput, IHasPrintSummary
     {
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> Find the smallest positive number that is evenly divisible by all of the numbers from [green]1[/] to [green]{MaxValue}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> Find the sum of all the numbers that can be written as the sum of [green]{Number}th[/] powers of their digits.");
         }
     }
 
@@ -63,19 +68,19 @@ public static partial class Problem5
         ProblemInputParser(
             "string",
             "String input",
-            "Parses a string in the format: [num=10]. E.g. 10, 20"),
+            "Parses a string in the format: [num=4]. E.g. 4, 5"),
         IProblemStringInputParser
     {
         public IProblemInput? Parse(IAnsiConsole console, string input)
         {
-            if (GetInputRegex().Match(input) is not { Success: true } match)
+            if (GetInputRegex().Match(input) is not {Success: true} match)
             {
                 console.MarkupLine("[red]Input is in an invalid format.[/]");
                 return null;
             }
 
             if (match.Groups["num"] is not { Success: true, Value: { } numberValue })
-                return new Input(10);
+                return new Input(4);
 
             if (!int.TryParse(numberValue, out var number))
             {
@@ -104,7 +109,7 @@ public static partial class Problem5
         {
             var maxValue = console.Prompt(
                 new TextPrompt<int>("Number:")
-                    .DefaultValue(10)
+                    .DefaultValue(4)
                     .ValidationErrorMessage("Must be a valid integer.")
                     .Validate(max => max switch
                     {
@@ -116,12 +121,12 @@ public static partial class Problem5
         }
     }
 
-    public record Output(int LargestPrime) : IProblemOutput, IHasPrintSummary
+    public record Output(long Sum) : IProblemOutput, IHasPrintSummary
     {
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> The smallest positive number is [green]{LargestPrime}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> The sum is [green]{Sum}[/].");
         }
     }
 
@@ -129,30 +134,35 @@ public static partial class Problem5
         ProblemSolver(
             "solver",
             "Solver",
-            "Solves the problem using a naive algorithm."),
+            "Solves the problem."),
         IProblemOutputSolver
     {
         public IProblemOutput Solve(IProblemInput problemInput)
         {
             var input = (Input)problemInput;
 
-            var minNumber = 2;
-            var maxNumber = input.MaxValue;
+            var pows = Enumerable.Range(0, 10).Select(e => (int) Math.Pow(e, input.Number)).ToArray();
+            var minNum = 10;
+            var maxNum = pows[9] * input.Number;
+            var sum = 0;
 
-            var factors = Enumerable
-                .Range(minNumber, maxNumber - minNumber + 1)
-                .SelectMany(x => Numbers
-                    .GetPrimeFactors(x)
-                    .GroupBy(f => f)
-                    .Select(g => (Prime: g.Key, Power: g.Count())))
-                .GroupBy(x => x.Prime)
-                .Select(g => (Prime: g.Key, Power: g.Select(e => e.Power).Max()))
-                .ToArray();
+            for (var i = minNum; i <= maxNum; i++)
+            {
+                var num = i;
+                var total = 0;
 
-            var result = factors
-                .Aggregate(1L, (acc, x) => acc * (long)Math.Pow(x.Prime, x.Power));
+                while (num > 0)
+                {
+                    var q = Math.DivRem(num, 10, out var r);
+                    total += pows[r];
+                    num = q;
+                }
 
-            return new Output((int)result);
+                if (total == i)
+                    sum += i;
+            }
+
+            return new Output(sum);
         }
     }
 }
