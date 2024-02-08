@@ -11,7 +11,8 @@ public static class ModelsExtensions
         IAnsiConsole console,
         string? preselectedKeyword,
         string singular,
-        string plural)
+        string plural,
+        TItem? defaultItem = null)
         where TItem : class, IDescribable, IHasKeyword
     {
         if (allItems.Count == 0)
@@ -20,9 +21,9 @@ public static class ModelsExtensions
             return null;
         }
 
-        var item = preselectedKeyword != null
+        var item = (preselectedKeyword != null
             ? allItems.FirstOrDefault(e => e.Keyword == preselectedKeyword)
-            : null;
+            : null) ?? defaultItem;
 
         while (item is null)
         {
@@ -119,10 +120,9 @@ public static class ModelsExtensions
         IAnsiConsole console,
         string? preselectedSource)
     {
-        return provider
-            .GetSources()
-            .ToArray()
-            .PrompForSelectableItem(console, preselectedSource, "source", "sources");
+        var sources = provider.GetSources().ToArray();
+
+        return sources.PrompForSelectableItem(console, preselectedSource, "source", "sources");
     }
 
     public static IProblemCategory? GetProblemCategory(
@@ -130,10 +130,9 @@ public static class ModelsExtensions
         IAnsiConsole console,
         string? preselectedCategory)
     {
-        return source
-            .GetCategories()
-            .ToArray()
-            .PrompForSelectableItem(console, preselectedCategory, "category", "categories");
+        var categories = source.GetCategories().ToArray();
+
+        return categories.PrompForSelectableItem(console, preselectedCategory, "category", "categories");
     }
 
     public static IProblemCategory? GetProblemCategory(
@@ -152,10 +151,9 @@ public static class ModelsExtensions
         IAnsiConsole console,
         string? preselectedProblem)
     {
-        return category
-            .GetProblems()
-            .ToArray()
-            .PrompForSelectableItem(console, preselectedProblem, "problem", "problems");
+        var problems = category.GetProblems().ToArray();
+
+        return problems.PrompForSelectableItem(console, preselectedProblem, "problem", "problems");
     }
 
     public static IProblem? GetProblem(
@@ -176,24 +174,24 @@ public static class ModelsExtensions
         IAnsiConsole console,
         string? preselectedParser)
     {
-        return problem
-            .GetInputParsers()
-            .ToArray()
-            .PrompForSelectableItem(console, preselectedParser, "parser", "parsers");
+        var parsers = problem.GetInputParsers().ToArray();
+
+        return parsers.PrompForSelectableItem(console, preselectedParser, "parser", "parsers", problem.DefaultInputParser);
     }
 
     public static IProblemInput? GetProblemInput(
         this IProblemInputParser parser,
+        IProblem problem,
         IAnsiConsole console,
         string? preselectedInput)
     {
         switch (parser)
         {
             case IProblemStringInputParser stringParser:
-                return stringParser.GetProblemInput(console, preselectedInput);
+                return stringParser.GetProblemInput(problem, console, preselectedInput);
 
             case IProblemPromptInputParser promptParser:
-                return promptParser.GetProblemInput(console, preselectedInput);
+                return promptParser.GetProblemInput(problem, console, preselectedInput);
 
             default:
                 console.MarkupLineInterpolated($"[red]Invalid parser[/]: {parser.GetType().FullName}");
@@ -209,33 +207,75 @@ public static class ModelsExtensions
     {
         return problem
             .GetProblemParser(console, preselectedParser)?
-            .GetProblemInput(console, preselectedInput);
+            .GetProblemInput(problem, console, preselectedInput);
     }
 
     public static IProblemInput? GetProblemInput(
         this IProblemStringInputParser parser,
+        IProblem problem,
         IAnsiConsole console,
         string? preselectedInput)
     {
+        var inputSources = problem.GetInputSources().ToArray();
+
         var input = preselectedInput != null
-            ? ParseInput(preselectedInput)
+            ? ParseInput(preselectedInput, false)
             : null;
 
         while (input is null)
         {
-            var inputString = console.Prompt(
-                new TextPrompt<string>("Enter the input"));
+            if (inputSources.Length == 0)
+            {
+                var inputString = console.Prompt(
+                    new TextPrompt<string>("Input:"));
 
-            input = ParseInput(inputString);
+                input = ParseInput(inputString, false);
+            }
+            else
+            {
+                IEnumerable<string> options = [
+                    .. inputSources.Select(e => $"{e.Keyword} - {e.Title}"),
+                    "Custom input",
+                ];
+
+                var selection = console.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("Select an input source:")
+                        .PageSize(10)
+                        .MoreChoicesText("[grey](Move up and down to reveal more input sources)[/]")
+                        .AddChoices(options));
+
+                if (selection == "Custom input")
+                {
+                    var inputString = console.Prompt(new TextPrompt<string>("Input:"));
+
+                    input = ParseInput(inputString, false);
+                }
+                else
+                {
+                    input = ParseInput(selection, true);
+                }
+            }
         }
 
         return input;
 
-        IProblemInput? ParseInput(string text)
+        IProblemInput? ParseInput(string text, bool withPrefix)
         {
+            var inputSource = withPrefix
+                ? inputSources.FirstOrDefault(e => text.StartsWith($"{e.Keyword} - "))
+                : inputSources.FirstOrDefault(e => e.Keyword == text);
+            if (inputSource != null) return parser.Parse(console, inputSource.GetInput());
+
             // text could be a text file path or a plain string
             try
             {
+                var current = Directory.GetCurrentDirectory();
+                var absolute = Path.GetFullPath(text);
+                if (!absolute.StartsWith(current))
+                {
+                    throw new IOException("File is not in the current directory.");
+                }
                 var fileContent = File.ReadAllText(text);
                 return parser.Parse(console, fileContent);
             }
@@ -250,6 +290,7 @@ public static class ModelsExtensions
 
     public static IProblemInput? GetProblemInput(
         this IProblemPromptInputParser parser,
+        IProblem problem,
         IAnsiConsole console,
         string? preselectedInput)
     {
@@ -261,6 +302,8 @@ public static class ModelsExtensions
         IAnsiConsole console,
         string[] preselectedSolvers)
     {
+        if (preselectedSolvers.Length == 0) preselectedSolvers = ["*"];
+
         return problem
             .GetSolvers()
             .ToArray()
@@ -283,7 +326,7 @@ public static class ModelsExtensions
                 break;
         }
     }
-    
+
     public static void PrintTo(this IProblemInput item, IAnsiConsole console) => PrintItem(item, console);
     public static void PrintTo(this IProblemOutput item, IAnsiConsole console) => PrintItem(item, console);
     public static void PrintTo(this IHasPrintSummary item, IAnsiConsole console) => PrintItem(item, console);

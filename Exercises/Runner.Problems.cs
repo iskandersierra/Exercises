@@ -60,9 +60,8 @@ public class ProblemRunner(
                 watch.Stop();
 
                 // print
-                console.MarkupLine($"[bold]Output:[/]");
                 output.PrintTo(console);
-                console.MarkupLine($"[bold]Elapsed time:[/] {watch.Elapsed.ToPreciseString()}");
+                console.MarkupLineInterpolated($"[yellow]{watch.Elapsed.ToPreciseString()}[/]");
                 break;
             }
 

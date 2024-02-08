@@ -10,6 +10,7 @@ public static partial class Problem6
         "problem6",
         "Sum square difference",
         GetInputParsers,
+        GetInputSources,
         GetSolvers,
         """
         The sum of the squares of the first ten natural numbers is,
@@ -28,8 +29,23 @@ public static partial class Problem6
 
     private static IEnumerable<IProblemInputParser> GetInputParsers()
     {
-        yield return new PromptInputParser();
         yield return new StringInputParser();
+        yield return new PromptInputParser();
+    }
+
+    private static IEnumerable<IProblemInputSource> GetInputSources()
+    {
+        yield return new ProblemInputStringSource(
+            "sample",
+            "Difference between the sum of the squares of the first ten natural numbers and the square of the sum",
+            "10",
+            expectedOutput: new Output(2640));
+
+        yield return new ProblemInputStringSource(
+            "question",
+            "Difference between the sum of the squares of the first one hundred natural numbers and the square of the sum",
+            "100",
+            expectedOutput: new Output(25164150));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
@@ -37,7 +53,14 @@ public static partial class Problem6
         yield return new Solver();
     }
 
-    public record Input(int Number) : IProblemInput;
+    public record Input(int Number) : IProblemInput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> Find the difference between the sum of the squares of the first [green]{Number}[/] natural numbers and the square of the sum.");
+        }
+    }
 
     [GeneratedRegex(@"^\s*((?<num>\d+)\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -99,7 +122,14 @@ public static partial class Problem6
         }
     }
 
-    public record Output(long Result) : IProblemOutput;
+    public record Output(long Result) : IProblemOutput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> The difference is [green]{Result}[/].");
+        }
+    }
 
     public class Solver() :
         ProblemSolver(

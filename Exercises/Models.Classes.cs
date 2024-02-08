@@ -1,5 +1,6 @@
 ﻿using Spectre.Console;
 using System;
+using System.Reflection;
 
 namespace Exercises;
 
@@ -13,7 +14,7 @@ public abstract class Describable(
     public string Title { get; } = title;
     public string? Summary { get; } = summary;
     public Uri? MainLink { get; } = mainLink;
-    
+
     public virtual void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
     {
         options ??= PrintSummaryOptions.Default;
@@ -104,6 +105,7 @@ public class Problem(
     string keyword,
     string title,
     Func<IEnumerable<IProblemInputParser>> getInputParsers,
+    Func<IEnumerable<IProblemInputSource>> getInputSources,
     Func<IEnumerable<IProblemSolver>> getSolvers,
     string? summary = null,
     Uri? mainLink = null) :
@@ -111,9 +113,15 @@ public class Problem(
     IProblem
 {
     private readonly Lazy<IEnumerable<IProblemInputParser>> inputParsers = new(getInputParsers);
+    private readonly Lazy<IEnumerable<IProblemInputSource>> inputSources = new(getInputSources);
     private readonly Lazy<IEnumerable<IProblemSolver>> solvers = new(getSolvers);
 
+    public IProblemInputParser? DefaultInputParser => inputParsers.Value.FirstOrDefault();
+    public IProblemInputSource? DefaultInputSource => inputSources.Value.FirstOrDefault();
+    public IProblemSolver? DefaultSolver => solvers.Value.FirstOrDefault();
+
     public IEnumerable<IProblemInputParser> GetInputParsers() => inputParsers.Value;
+    public IEnumerable<IProblemInputSource> GetInputSources() => inputSources.Value;
     public IEnumerable<IProblemSolver> GetSolvers() => solvers.Value;
 }
 
@@ -135,4 +143,42 @@ public abstract class ProblemSolver(
     DescribableWithKeyword(keyword, title, summary, mainLink),
     IProblemSolver
 {
+}
+
+public class ProblemInputStringSource(
+    string keyword,
+    string title,
+    string input,
+    IProblemOutput? expectedOutput = null,
+    string? summary = null,
+    Uri? mainLink = null) :
+    DescribableWithKeyword(keyword, title, summary, mainLink),
+    IProblemInputSource
+{
+    public string GetInput() => input;
+
+    public IProblemOutput? GetExpectedOutput() => expectedOutput;
+}
+
+public class ProblemInputEmbeddedSource(
+    string keyword,
+    string title,
+    string resourceName,
+    IProblemOutput? expectedOutput = null,
+    Assembly? assembly = null,
+    string? summary = null,
+    Uri? mainLink = null) :
+    DescribableWithKeyword(keyword, title, summary, mainLink),
+    IProblemInputSource
+{
+    private readonly Assembly assembly = assembly ?? Assembly.GetCallingAssembly();
+
+    public string GetInput()
+    {
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    public IProblemOutput? GetExpectedOutput() => expectedOutput;
 }

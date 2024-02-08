@@ -2,7 +2,7 @@
   "profiles": {
     "Runner": {
       "commandName": "Project",
-      "commandLineArgs": "euler page1 problem3 -p string -i 10 -s solver"
+      "commandLineArgs": "euler page1 problem50"
     }
   }
 }

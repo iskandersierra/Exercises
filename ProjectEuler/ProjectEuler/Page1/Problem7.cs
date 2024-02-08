@@ -10,6 +10,7 @@ public static partial class Problem7
         "problem7",
         "10001st prime",
         GetInputParsers,
+        GetInputSources,
         GetSolvers,
         """
         By listing the first six prime numbers: 2, 3, 5, 7, 11, and 13, we can see that the 6th 
@@ -23,8 +24,23 @@ public static partial class Problem7
 
     private static IEnumerable<IProblemInputParser> GetInputParsers()
     {
-        yield return new PromptInputParser();
         yield return new StringInputParser();
+        yield return new PromptInputParser();
+    }
+
+    private static IEnumerable<IProblemInputSource> GetInputSources()
+    {
+        yield return new ProblemInputStringSource(
+            "sample",
+            "Prime number 6th",
+            "6",
+            expectedOutput: new Output(13));
+
+        yield return new ProblemInputStringSource(
+            "question",
+            "Prime number 10001st",
+            "10001",
+            expectedOutput: new Output(104743));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
@@ -32,7 +48,14 @@ public static partial class Problem7
         yield return new Solver();
     }
 
-    public record Input(int Number) : IProblemInput;
+    public record Input(int Number) : IProblemInput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> Find the [green]{Number}[/]st prime number.");
+        }
+    }
 
     [GeneratedRegex(@"^\s*((?<num>\d+)\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -94,7 +117,14 @@ public static partial class Problem7
         }
     }
 
-    public record Output(long Result) : IProblemOutput;
+    public record Output(long Result) : IProblemOutput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> The prime is [green]{Result}[/].");
+        }
+    }
 
     public class Solver() :
         ProblemSolver(

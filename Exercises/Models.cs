@@ -44,7 +44,12 @@ public interface IProblemCategory : IDescribable, IHasKeyword
 
 public interface IProblem : IDescribable, IHasKeyword
 {
+    IProblemInputParser? DefaultInputParser { get; }
+    IProblemInputSource? DefaultInputSource { get; }
+    IProblemSolver? DefaultSolver { get; }
+
     IEnumerable<IProblemInputParser> GetInputParsers();
+    IEnumerable<IProblemInputSource> GetInputSources();
     IEnumerable<IProblemSolver> GetSolvers();
 }
 
@@ -64,6 +69,12 @@ public interface IProblemStringInputParser : IProblemInputParser
 public interface IProblemPromptInputParser : IProblemInputParser
 {
     IProblemInput? Prompt(IAnsiConsole console);
+}
+
+public interface IProblemInputSource : IDescribable, IHasKeyword
+{
+    string GetInput();
+    IProblemOutput? GetExpectedOutput();
 }
 
 public interface IProblemSolver : IDescribable, IHasKeyword

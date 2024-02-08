@@ -10,6 +10,7 @@ public static partial class Problem50
         "problem50",
         "Consecutive Prime Sum",
         GetInputParsers,
+        GetInputSources,
         GetSolvers,
         """
         The prime 41, can be written as the sum of six consecutive primes:
@@ -27,15 +28,38 @@ public static partial class Problem50
 
     private static IEnumerable<IProblemInputParser> GetInputParsers()
     {
-        yield return new PromptInputParser();
         yield return new StringInputParser();
+        yield return new PromptInputParser();
+    }
+
+    private static IEnumerable<IProblemInputSource> GetInputSources()
+    {
+        yield return new ProblemInputStringSource(
+            "sample",
+            "Longest sum of consecutive primes below 100",
+            "100",
+            expectedOutput: new Output(41, 0, 6));
+
+        yield return new ProblemInputStringSource(
+            "question",
+            "Longest sum of consecutive primes below 1.000.000",
+            "1000000",
+            expectedOutput: new Output(997651, 3, 543));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
     {
         yield return new Solver();
     }
-    public record Input(int Below) : IProblemInput;
+
+    public record Input(int Below) : IProblemInput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> Find the prime, below [green]{Below}[/], that can be written as the sum of the most consecutive primes.");
+        }
+    }
 
     [GeneratedRegex(@"^\s*((?<below>\d+)\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -97,7 +121,14 @@ public static partial class Problem50
         }
     }
 
-    public record Output(int Prime, int Start, int Length) : IProblemOutput;
+    public record Output(int Prime, int Start, int Length) : IProblemOutput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> The prime is [green]{Prime}[/], which is the sum of [green]{Length}[/] consecutive primes starting at [green]{Start}[/].");
+        }
+    }
 
     public class Solver() :
         ProblemSolver(

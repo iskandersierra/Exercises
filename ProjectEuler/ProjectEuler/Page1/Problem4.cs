@@ -11,6 +11,7 @@ public static partial class Problem4
         "problem4",
         "Largest Palindrome Product",
         GetInputParsers,
+        GetInputSources,
         GetSolvers,
         """
         A palindromic number reads the same both ways. The largest palindrome made
@@ -24,16 +25,38 @@ public static partial class Problem4
 
     private static IEnumerable<IProblemInputParser> GetInputParsers()
     {
-        yield return new PromptInputParser();
         yield return new StringInputParser();
+        yield return new PromptInputParser();
+    }
+
+    private static IEnumerable<IProblemInputSource> GetInputSources()
+    {
+        yield return new ProblemInputStringSource(
+            "sample",
+            "Largest palindrome made from the product of two 2-digit numbers",
+            "2",
+            expectedOutput: new Output(9009, 91, 99));
+
+        yield return new ProblemInputStringSource(
+            "question",
+            "Largest palindrome made from the product of two 3-digit numbers",
+            "3",
+            expectedOutput: new Output(906609, 913, 993));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
     {
-        yield return new NaiveSolver();
+        yield return new Solver();
     }
 
-    public record Input(int Digits) : IProblemInput;
+    public record Input(int Digits) : IProblemInput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> Find the largest palindrome made from the product of two [green]{Digits}-digit[/] numbers.");
+        }
+    }
 
     [GeneratedRegex(@"^\s*((?<digits>\d+)\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -95,12 +118,32 @@ public static partial class Problem4
         }
     }
 
-    public record Output(long LargestPalindrome, int Number1, int Number2) : IProblemOutput;
+    public record Output(long LargestPalindrome, int Number1, int Number2) : IProblemOutput, IHasPrintSummary
+    {
+        public virtual bool Equals(Output? other)
+        {
+            if (other is null) return false;
+            if (this == other) return true;
 
-    public class NaiveSolver() :
+            if (LargestPalindrome != other.LargestPalindrome) return false;
+
+            if (Number1 == other.Number1 && Number2 == other.Number2) return true;
+            if (Number1 == other.Number2 && Number2 == other.Number1) return true;
+
+            return false;
+        }
+
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> The largest palindrome is [green]{LargestPalindrome}[/] which is the product of [green]{Number1}[/] and [green]{Number2}[/].");
+        }
+    }
+
+    public class Solver() :
         ProblemSolver(
-            "naive",
-            "Naive solver",
+            "solver",
+            "Solver",
             "Solves the problem using a naive algorithm."),
         IProblemOutputSolver
     {

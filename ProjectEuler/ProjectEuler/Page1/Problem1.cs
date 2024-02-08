@@ -10,6 +10,7 @@ public static partial class Problem1
         "problem1",
         "Multiples of 3 and 5",
         GetInputParsers,
+        GetInputSources,
         GetSolvers,
         """
         If we list all the natural numbers below 10 that are multiples of 3 or 5,
@@ -24,8 +25,23 @@ public static partial class Problem1
 
     private static IEnumerable<IProblemInputParser> GetInputParsers()
     {
-        yield return new PromptInputParser();
         yield return new StringInputParser();
+        yield return new PromptInputParser();
+    }
+
+    private static IEnumerable<IProblemInputSource> GetInputSources()
+    {
+        yield return new ProblemInputStringSource(
+            "sample",
+            "Natural numbers below 10 multiples of 3 or 5",
+            "10 3 5",
+            expectedOutput: new Output(23));
+
+        yield return new ProblemInputStringSource(
+            "question",
+            "Natural numbers below 1000 multiples of 3 or 5",
+            "1000 3 5",
+            expectedOutput: new Output(233168));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
@@ -34,7 +50,14 @@ public static partial class Problem1
         yield return new NaiveSolver();
     }
 
-    public record Input(int Below, int Prime1, int Prime2) : IProblemInput;
+    public record Input(int Below, int Prime1, int Prime2) : IProblemInput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> Find the sum of all the multiples of [green]{Prime1}[/] or [green]{Prime2}[/] below [green]{Below}[/].");
+        }
+    }
 
     [GeneratedRegex(@"^\s*((?<below>\d+)(\s+(?<prime1>\d+)\s+(?<prime2>\d+))?\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -151,7 +174,14 @@ public static partial class Problem1
         }
     }
 
-    public record Output(long Amount) : IProblemOutput;
+    public record Output(long Amount) : IProblemOutput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> The sum is [green]{Amount}[/].");
+        }
+    }
 
     public class Solver() :
         ProblemSolver(

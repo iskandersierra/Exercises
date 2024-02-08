@@ -10,6 +10,7 @@ public static partial class Problem3
         "problem3",
         "Largest Prime Factor",
         GetInputParsers,
+        GetInputSources,
         GetSolvers,
         """
         The prime factors of 13195 are 5, 7, 13 and 29.
@@ -22,8 +23,23 @@ public static partial class Problem3
 
     private static IEnumerable<IProblemInputParser> GetInputParsers()
     {
-        yield return new PromptInputParser();
         yield return new StringInputParser();
+        yield return new PromptInputParser();
+    }
+
+    private static IEnumerable<IProblemInputSource> GetInputSources()
+    {
+        yield return new ProblemInputStringSource(
+            "sample",
+            "Largest prime factor of 13195",
+            "13195",
+            expectedOutput: new Output(29));
+
+        yield return new ProblemInputStringSource(
+            "question",
+            "Largest prime factor of 600851475143",
+            "600851475143",
+            expectedOutput: new Output(6857));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
@@ -31,7 +47,14 @@ public static partial class Problem3
         yield return new Solver();
     }
 
-    public record Input(long Number) : IProblemInput;
+    public record Input(long Number) : IProblemInput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> Find the largest prime factor of the number [green]{Number}[/].");
+        }
+    }
 
     [GeneratedRegex(@"^\s*((?<num>\d+)\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -93,7 +116,14 @@ public static partial class Problem3
         }
     }
 
-    public record Output(int LargestPrime) : IProblemOutput;
+    public record Output(int LargestPrime) : IProblemOutput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> The largest prime factor is [green]{LargestPrime}[/].");
+        }
+    }
 
     public class Solver() :
         ProblemSolver(

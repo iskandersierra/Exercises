@@ -10,6 +10,7 @@ public static partial class Problem5
         "problem5",
         "Smallest Multiple",
         GetInputParsers,
+        GetInputSources,
         GetSolvers,
         """
         2520 is the smallest number that can be divided by each of the numbers from 1 to 10 without any remainder.
@@ -22,16 +23,38 @@ public static partial class Problem5
 
     private static IEnumerable<IProblemInputParser> GetInputParsers()
     {
-        yield return new PromptInputParser();
         yield return new StringInputParser();
+        yield return new PromptInputParser();
+    }
+
+    private static IEnumerable<IProblemInputSource> GetInputSources()
+    {
+        yield return new ProblemInputStringSource(
+            "sample",
+            "Smallest number divisible by numbers from 1 to 10",
+            "10",
+            expectedOutput: new Output(2520));
+
+        yield return new ProblemInputStringSource(
+            "question",
+            "Smallest number divisible by numbers from 1 to 20",
+            "20",
+            expectedOutput: new Output(232792560));
     }
 
     private static IEnumerable<IProblemSolver> GetSolvers()
     {
-        yield return new NaiveSolver();
+        yield return new Solver();
     }
 
-    public record Input(int MaxValue) : IProblemInput;
+    public record Input(int MaxValue) : IProblemInput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> Find the smallest positive number that is evenly divisible by all of the numbers from [green]1[/] to [green]{MaxValue}[/].");
+        }
+    }
 
     [GeneratedRegex(@"^\s*((?<num>\d+)\s*)?$")]
     private static partial Regex GetInputRegex();
@@ -93,12 +116,19 @@ public static partial class Problem5
         }
     }
 
-    public record Output(int LargestPrime) : IProblemOutput;
+    public record Output(int LargestPrime) : IProblemOutput, IHasPrintSummary
+    {
+        public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
+        {
+            options ??= new PrintSummaryOptions();
+            console.MarkupLineInterpolated($"{options.Indent}> The smallest positive number is [green]{LargestPrime}[/].");
+        }
+    }
 
-    public class NaiveSolver() :
+    public class Solver() :
         ProblemSolver(
-            "naive",
-            "Naive solver",
+            "solver",
+            "Solver",
             "Solves the problem using a naive algorithm."),
         IProblemOutputSolver
     {
