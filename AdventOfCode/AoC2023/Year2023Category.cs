@@ -17,5 +17,6 @@ public static class Year2023Category
     private static IEnumerable<IProblem> GetProblems()
     {
         yield return Day1.Instance;
+        yield return Day2.Instance;
     }
 }
