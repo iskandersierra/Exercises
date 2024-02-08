@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Day1.question.txt" />
+    <None Remove="Day1.sample1.txt" />
+    <None Remove="Day1.sample2.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Day1.question.txt" />
+    <EmbeddedResource Include="Day1.sample2.txt" />
+    <EmbeddedResource Include="Day1.sample1.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Exercises\Exercises.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -91,5 +91,5 @@ public interface IProblemOutputSolver : IProblemSolver
 }
 public interface IProblemConsoleSolver : IProblemSolver
 {
-    void Solve(IProblemInput input);
+    void Solve(IProblemInput input, IAnsiConsole console);
 }

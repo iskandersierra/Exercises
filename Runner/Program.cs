@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using AoC;
 using Exercises;
 using ProjectEuler;
 using Spectre.Console;
@@ -97,5 +98,6 @@ public class ProblemSourceProvider : IProblemSourceProvider
     public IEnumerable<IProblemSource> GetSources()
     {
         yield return ProjectEulerSource.Instance;
+        yield return AdventOfCodeSource.Instance;
     }
 }

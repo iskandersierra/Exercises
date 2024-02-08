@@ -69,7 +69,7 @@ public class ProblemRunner(
             {
                 // measure
                 var watch = Stopwatch.StartNew();
-                outputSolver.Solve(input);
+                outputSolver.Solve(input, console);
                 watch.Stop();
 
                 // print
