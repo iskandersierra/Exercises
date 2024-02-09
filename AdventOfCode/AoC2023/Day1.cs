@@ -1,6 +1,5 @@
 using Exercises;
 using Spectre.Console;
-using System.Text.RegularExpressions;
 
 namespace AoC2023;
 
@@ -87,7 +86,7 @@ public static partial class Day1
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> The result is [green]{Result}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> The result is [green]{Result}[/]");
         }
     }
 

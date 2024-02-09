@@ -1,10 +1,7 @@
-using System.Text;
 using Exercises;
 using Spectre.Console;
+using System.Text;
 using System.Text.RegularExpressions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using static Exercises.ProblemRunner;
-using System;
 
 namespace AoC2023;
 
@@ -72,7 +69,7 @@ public static partial class Day2
             {
                 sb.Append($"{show};");
             }
-        
+
             return sb.ToString();
         }
     }
@@ -158,7 +155,7 @@ public static partial class Day2
         public void PrintSummary(IAnsiConsole console, PrintSummaryOptions? options = null)
         {
             options ??= new PrintSummaryOptions();
-            console.MarkupLineInterpolated($"{options.Indent}> The result is [green]{Result}[/].");
+            console.MarkupLineInterpolated($"{options.Indent}> The result is [green]{Result}[/]");
         }
     }
 
