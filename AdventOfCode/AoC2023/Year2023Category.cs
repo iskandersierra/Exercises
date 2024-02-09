@@ -20,5 +20,6 @@ public static class Year2023Category
         yield return Day2.Instance;
         yield return Day3.Instance;
         yield return Day4.Instance;
+        yield return Day5.Instance;
     }
 }

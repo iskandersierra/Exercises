@@ -2,7 +2,7 @@
   "profiles": {
     "Runner": {
       "commandName": "Project",
-      "commandLineArgs": "euler page1 problem30"
+      "commandLineArgs": "aoc 2023 day5 -s step1 -w 2"
     }
   }
 }
