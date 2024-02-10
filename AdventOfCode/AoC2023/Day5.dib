@@ -1,0 +1,17 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!csharp
+
+using System;
+using System.Collections.Generic;
+
+#!csharp
+
+List<int> numbers = [10,20,30];
+
+#!csharp
+
+var index = numbers.BinarySearch(20);
+$"Index = {index}. Not Index = {~index}"

@@ -9,6 +9,12 @@ var app = new CommandApp<SolveCommand>();
 
 app.Configure(config =>
 {
+    config.SetExceptionHandler(exception =>
+    {
+        AnsiConsole.WriteException(exception);
+        return 1;
+    });
+
     config.AddCommand<PrintCommand>("print");
 });
 
