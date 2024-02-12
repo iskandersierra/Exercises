@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using Spectre.Console.Rendering;
+using System.Collections;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text;
+using static Exercises.Segments;
 
 namespace Exercises;
 
@@ -12,9 +15,11 @@ public interface ISegmentDescriptor<TSegment>
     bool AreEqual(TSegment left, TSegment right);
     bool Contains(TSegment segment, TSegment otherSegment);
     TSegment Intersection(TSegment left, TSegment right);
+    bool Intersects(TSegment left, TSegment right);
+    bool Touches(TSegment left, TSegment right);
     TSegment Bounding(TSegment left, TSegment right);
     IEnumerable<TSegment> Union(TSegment left, TSegment right);
-    IEnumerable<TSegment> Substract(TSegment left, TSegment right);
+    IEnumerable<TSegment> Subtract(TSegment left, TSegment right);
 }
 
 public interface ISegmentDescriptor<TSegment, TElement> :
@@ -30,11 +35,21 @@ public interface ISegmentSet<TSegment> :
     IEnumerable<TSegment>
     where TSegment : notnull
 {
+    bool IsEmpty { get; }
+    void Clear();
+    int Count { get; }
+
     bool Add(TSegment newSegment);
     bool AddRange(IEnumerable<TSegment> newSegments);
-    void Clear(TSegment segment);
-    int Count { get; }
-    // TODO: AddRange, Remove, RemoveRange, Contains, Intersect, Union, Substract, Bounding
+
+    ISegmentSet<TSegment> Intersection(TSegment newSegment);
+    bool Intersect(TSegment newSegment);
+    bool Intersects(TSegment newSegment);
+
+    ISegmentSet<TSegment> Subtraction(TSegment newSegment);
+    bool Subtract(TSegment newSegment);
+
+    // TODO: Remove, RemoveRange, Contains, Intersect, Union, Substract, Bounding
 }
 
 public readonly struct Segment<TElement>
@@ -47,6 +62,23 @@ public readonly struct Segment<TElement>
         Start = start;
         End = end;
     }
+
+    public void Deconstruct(out TElement start, out TElement end)
+    {
+        start = Start;
+        end = End;
+    }
+
+    public override string ToString() =>
+        $"[{Start}, {End})";
+
+    public override bool Equals(object? obj) =>
+        obj is Segment<TElement> other &&
+        object.Equals(Start, other.Start) &&
+        object.Equals(End, other.End);
+
+    public override int GetHashCode() =>
+        HashCode.Combine(Start, End);
 }
 
 public static class Segments
@@ -61,7 +93,7 @@ public static class Segments
         private static readonly Segment<TNumber> EmptySegment = new(TNumber.Zero, TNumber.Zero);
 
         public Segment<TNumber> Empty => EmptySegment;
-        
+
         public TNumber Size(Segment<TNumber> segment) =>
             segment.End - segment.Start;
 
@@ -80,8 +112,8 @@ public static class Segments
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(Segment<TNumber> segment, Segment<TNumber> otherSegment) =>
             IsEmpty(otherSegment) ||
-            (!IsEmpty(segment) && 
-             segment.Start <= otherSegment.Start && 
+            (!IsEmpty(segment) &&
+             segment.Start <= otherSegment.Start &&
              otherSegment.End <= segment.End);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -89,6 +121,16 @@ public static class Segments
             Create(
                 TNumber.Max(left.Start, right.Start),
                 TNumber.Min(left.End, right.End));
+
+        public bool Intersects(Segment<TNumber> left, Segment<TNumber> right) =>
+            !IsEmpty(Intersection(left, right));
+
+        public bool Touches(Segment<TNumber> left, Segment<TNumber> right)
+        {
+            if (IsEmpty(left) || IsEmpty(right)) return false;
+            var bounding = Bounding(left, right);
+            return Size(bounding) <= Size(left) + Size(right);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Segment<TNumber> Bounding(Segment<TNumber> left, Segment<TNumber> right) =>
@@ -159,7 +201,7 @@ public static class Segments
                 TNumber.Max(left.End, right.End));
         }
 
-        public IEnumerable<Segment<TNumber>> Substract(Segment<TNumber> left, Segment<TNumber> right)
+        public IEnumerable<Segment<TNumber>> Subtract(Segment<TNumber> left, Segment<TNumber> right)
         {
             // left  : ∅
             // right : ∀
@@ -224,6 +266,16 @@ public static class Segments
 
         public ISegmentSet<Segment<TNumber>> CreateSet() =>
             new NumericSegmentSet<TNumber>(this);
+
+        public ISegmentSet<Segment<TNumber>> CreateSet(IEnumerable<Segment<TNumber>> segments)
+        {
+            var set = CreateSet();
+            set.AddRange(segments);
+            return set;
+        }
+
+        public ISegmentSet<Segment<TNumber>> CreateSet(params Segment<TNumber>[] segments) =>
+            CreateSet((IEnumerable<Segment<TNumber>>)segments);
 
         public IComparer<Segment<TNumber>> StartComparer =>
             NumericSegmentStartComparer<TNumber>.Default;
@@ -296,47 +348,44 @@ public static class Segments
             // result  : [10--)  [20--)  [30--)  [40--)  [50--)
 
             // TODO: Optimize
-            //var startIndex = FindStart(newSegment.Start);
-            //var endIndex = FindEnd(newSegment.End);
 
-            if (newSegment.End < segments[0].Start)
+            var newSegments = new List<Segment<TNumber>>();
+            var mergedSegment = newSegment;
+            var mergedAdded = false;
+            foreach (var segment in segments)
             {
-                segments.Insert(0, newSegment);
-                return true;
+                if (segment.End < mergedSegment.Start)
+                {
+                    newSegments.Add(segment);
+                }
+                else if (segment.Start > mergedSegment.End)
+                {
+                    if (!mergedAdded)
+                    {
+                        newSegments.Add(mergedSegment);
+                        mergedAdded = true;
+                    }
+                    newSegments.Add(segment);
+                }
+                else
+                {
+                    mergedSegment = descriptor.Bounding(segment, mergedSegment);
+                }
             }
 
-            if (newSegment.Start > segments[^1].End)
+            if (!mergedAdded)
             {
-                segments.Add(newSegment);
-                return true;
+                newSegments.Add(mergedSegment);
             }
 
-            //var index = 0;
-            //var toMerge = newSegment;
-            //var found = false;
-            //var startIndex = 0;
-            //var endIndex = 0;
-            //while (index < segments.Count)
-            //{
-            //    var segment = segments[index];
-            //    if (segment.End < toMerge.Start)
-            //    {
-            //        startIndex = index;
-            //    }
-            //    else if (segment.Start > toMerge.End)
-            //    {
-            //        endIndex = index;
-            //        break;
-            //    }
-            //    else
-            //    {
-            //        toMerge = descriptor.Bounding(toMerge, segment);
-            //        segments.RemoveAt(index);
-            //        merged = true;
-            //    }
-            //}
+            var changed =
+                newSegments.Count != segments.Count ||
+                newSegments.Zip(segments).Any(x => !descriptor.AreEqual(x.First, x.Second));
 
-            return false;
+            segments.Clear();
+            segments.AddRange(newSegments);
+
+            return changed;
         }
 
         public bool AddRange(IEnumerable<Segment<TNumber>> newSegments)
@@ -349,10 +398,64 @@ public static class Segments
             return result;
         }
 
-        public void Clear(Segment<TNumber> segment)
+        public ISegmentSet<Segment<TNumber>> Intersection(Segment<TNumber> newSegment)
         {
-            segments.Clear();
+            return descriptor.CreateSet(
+                segments.Select(s =>
+                    descriptor.Intersection(s, newSegment)));
         }
+
+        public bool Intersect(Segment<TNumber> newSegment)
+        {
+            if (descriptor.IsEmpty(newSegment))
+            {
+                if (IsEmpty) return false;
+                segments.Clear();
+                return true;
+            }
+
+            var temporary = Intersection(newSegment);
+            var changed = !Equals(temporary);
+
+            if (!changed) return false;
+
+            segments.Clear();
+            segments.AddRange(temporary);
+
+            return changed;
+        }
+
+        public bool Intersects(Segment<TNumber> newSegment) =>
+            !Intersection(newSegment).IsEmpty;
+
+        public ISegmentSet<Segment<TNumber>> Subtraction(Segment<TNumber> newSegment)
+        {
+            return descriptor.CreateSet(
+                segments.SelectMany(segment =>
+                    descriptor.Subtract(segment, newSegment)));
+        }
+
+        public bool Subtract(Segment<TNumber> newSegment)
+        {
+            if (descriptor.IsEmpty(newSegment))
+            {
+                return false;
+            }
+
+            var temporary = Subtraction(newSegment);
+            var changed = !Equals(temporary);
+
+            if (!changed) return false;
+
+            segments.Clear();
+            segments.AddRange(temporary);
+
+            return changed;
+        }
+
+        public bool IsEmpty => segments.Count == 0;
+
+        public void Clear() => segments.Clear();
 
         public int Count => segments.Count;
 
@@ -365,60 +468,51 @@ public static class Segments
         {
             return GetEnumerator();
         }
-        private int FindStart(TNumber element)
+
+        public override bool Equals(object? obj)
         {
-            var left = 0;
-            var length = segments.Count;
-            while (length > 0)
+            if (obj is not IEnumerable<Segment<TNumber>> other) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            using var enumerator = GetEnumerator();
+            using var otherEnumerator = other.GetEnumerator();
+
+            while (true)
             {
-                var half = length >> 1;
-                var middle = left + half;
+                var hasNext = enumerator.MoveNext();
+                if (hasNext != otherEnumerator.MoveNext()) return false;
+                if (!hasNext) return true;
 
-                var middleSegment = segments[middle];
-
-                if (element < middleSegment.Start)
-                {
-                    length = half;
-                }
-                else if (element >= middleSegment.End)
-                {
-                    left = middle + 1;
-                    length -= half + 1;
-                }
-                else
-                {
-                    return middle;
-                }
+                if (!descriptor.AreEqual(enumerator.Current, otherEnumerator.Current)) return false;
             }
-            return ~left;
         }
 
-        private int FindEnd(TNumber element)
+        public override int GetHashCode()
         {
-            var left = 0;
-            var length = segments.Count;
-            while (length > 0)
+            var hash = new HashCode();
+            foreach (var segment in segments)
             {
-                var half = length >> 1;
-                var middle = left + half;
-
-                var middleSegment = segments[middle];
-
-                if (element <= middleSegment.Start)
-                {
-                    length = half;
-                }
-                else if (element > middleSegment.End)
-                {
-                    left = middle + 1;
-                    length -= half + 1;
-                }
-                else
-                {
-                    return middle;
-                }
+                hash.Add(segment);
             }
-            return ~left;
+            return hash.ToHashCode();
+        }
+
+        public override string ToString()
+        {
+            if (segments.Count == 0) return "∅";
+
+            var sb = new StringBuilder();
+
+            sb.Append("{ ");
+            sb.Append(segments[0]);
+            foreach (var segment in segments.Skip(1))
+            {
+                sb.Append(", ");
+                sb.Append(segment);
+            }
+            sb.Append(" }");
+
+            return sb.ToString();
         }
     }
 }

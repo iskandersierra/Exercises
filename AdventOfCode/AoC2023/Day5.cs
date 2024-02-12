@@ -4,6 +4,7 @@ using Spectre.Console;
 using System.Text;
 using System.Text.RegularExpressions;
 using Spectre.Console.Rendering;
+using System;
 
 namespace AoC2023;
 
@@ -134,6 +135,85 @@ public static partial class Day5
         return source;
     }
 
+    private static ISegmentSet<Segment<long>> MapSourceUsing(ISegmentSet<Segment<long>> sources, InputMap map)
+    {
+        var desc = Segments.Int64;
+        var result = desc.CreateSet();
+
+        foreach (var source in sources)
+        {
+            var leftovers = desc.CreateSet(source);
+            foreach (var line in map.Lines)
+            {
+                if (leftovers.IsEmpty) break;
+                var offset = line.Destination - line.Source;
+                var lineSegment = desc.Create(line.Source, line.Source + line.Length);
+                var intersection = leftovers.Intersection(lineSegment);
+                leftovers.Subtract(lineSegment);
+                foreach (var intersectionSegment in intersection)
+                {
+                    var mappedSegment = desc.Create(
+                        intersectionSegment.Start + offset,
+                        intersectionSegment.End + offset);
+
+                    result.Add(mappedSegment);
+                }
+            }
+
+            if (!leftovers.IsEmpty)
+            {
+                result.AddRange(leftovers);
+            }
+        }
+
+        return result;
+    }
+
+    private static ISegmentSet<Segment<long>> MapSourceUsing(
+        ISegmentSet<Segment<long>> sources,
+        InputMap map,
+        IAnsiConsole console)
+    {
+        var desc = Segments.Int64;
+        var result = desc.CreateSet();
+
+        foreach (var source in sources)
+        {
+            console.WriteLine($"  - Mapping source {source} ...");
+            var leftovers = desc.CreateSet(source);
+            foreach (var line in map.Lines)
+            {
+                var offset = line.Destination - line.Source;
+                var lineSegment = desc.Create(line.Source, line.Source + line.Length);
+                console.WriteLine($"    - Leftovers {leftovers} with map {line} using segment {lineSegment} and offset {offset}");
+                if (leftovers.IsEmpty) break;
+                var intersection = leftovers.Intersection(lineSegment);
+                console.WriteLine($"      - Leftover \u2229 Map = {intersection}");
+                leftovers.Subtract(lineSegment);
+                console.WriteLine($"      - Leftover \u2216 Map = {leftovers}");
+                foreach (var intersectionSegment in intersection)
+                {
+                    var mappedSegment = desc.Create(
+                        intersectionSegment.Start + offset,
+                        intersectionSegment.End + offset);
+
+                    console.WriteLine($"      - Mapped segment: {intersectionSegment} ==> {mappedSegment}");
+
+                    result.Add(mappedSegment);
+                }
+            }
+
+            if (!leftovers.IsEmpty)
+            {
+                console.WriteLine($"    - Adding remaining leftovers: {leftovers}");
+                result.AddRange(leftovers);
+            }
+            console.WriteLine($"    - Partial results: {result}");
+        }
+
+        return result;
+    }
+
     private static Dictionary<string, long[]> CreateMapping(Input input)
     {
         var dict = new Dictionary<string, long[]>();
@@ -223,17 +303,21 @@ public static partial class Day5
         {
             var input = (Input)problemInput;
 
-            var result = 0;
-            var seeds = new List<LongSegment>();
-            for (int i = 0; i < input.Seeds.Length; i+=2)
+            var result = 0L;
+
+            var desc = Segments.Int64;
+            ISegmentSet<Segment<long>> sources = desc
+                .CreateSet(input.Seeds.Chunk(2).Select(c => desc.Create(c[0], c[0] + c[1])));
+            console.WriteLine($"seeds: {sources}");
+
+            foreach (var map in input.Maps)
             {
-                seeds.Add(new LongSegment(input.Seeds[i], input.Seeds[i+1]));
+                var destinations = MapSourceUsing(sources, map, console);
+                console.WriteLine($"{map.To}: {destinations}");
+                sources = destinations;
             }
 
-            foreach (var seed in seeds)
-            {
-                console.WriteLine($"Seed: {seed}");
-            }
+            result = sources.First().Start;
 
             console.MarkupLineInterpolated($"[yellow]Result:[/] {result}");
         }
@@ -247,132 +331,22 @@ public static partial class Day5
         {
             var input = (Input)problemInput;
 
-            var result = 0;
+
+            var result = 0L;
+
+            var desc = Segments.Int64;
+            ISegmentSet<Segment<long>> sources = desc
+                .CreateSet(input.Seeds.Chunk(2).Select(c => desc.Create(c[0], c[0] + c[1])));
+
+            foreach (var map in input.Maps)
+            {
+                var destinations = MapSourceUsing(sources, map);
+                sources = destinations;
+            }
+
+            result = sources.First().Start;
 
             return new Output(result);
         }
     }
-}
-
-public readonly record struct LongSegment(long Start, long End)
-{
-    public static readonly LongSegment Empty = new(0, 0);
-
-    /// <summary>
-    /// Exclusive end of the segment
-    /// </summary>
-    public long Length { get; } = End - Start;
-
-    public bool IsEmpty { get; } = Start >= End;
-
-    public bool Contains(long value) => value >= Start && value < End;
-
-    public bool Contains(LongSegment segment) => segment.Start >= Start && segment.End <= End;
-
-    public LongSegment Intersect(LongSegment segment)
-    {
-        if (IsEmpty || segment.IsEmpty) return Empty;
-        var start = Math.Max(Start, segment.Start);
-        var end = Math.Min(End, segment.End);
-        if (start < end) return new LongSegment(start, end);
-        return Empty;
-    }
-
-    public LongSegment Merge(LongSegment segment)
-    {
-        if (IsEmpty) return segment;
-        if (segment.IsEmpty) return this;
-        var start = Math.Min(Start, segment.Start);
-        var end = Math.Max(End, segment.End);
-        return new LongSegment(start, end);
-    }
-
-    public override string ToString()
-    {
-        return IsEmpty ? "\u2205" : $"[{Start}, {End})";
-    }
-
-    public static readonly IComparer<LongSegment> StartComparer = new LongSegmentStartComparer();
-
-    private class LongSegmentStartComparer : IComparer<LongSegment>
-    {
-        public int Compare(LongSegment x, LongSegment y)
-        {
-            if (x.IsEmpty)
-            {
-                if (y.IsEmpty) return 0;
-                return -1;
-            }
-            if (y.IsEmpty) return 1;
-            return x.Start.CompareTo(y.Start);
-        }
-    }
-}
-
-public class LongSegmentSet : IEnumerable<LongSegment>
-{
-    private List<LongSegment> segments = new();
-
-    public IEnumerator<LongSegment> GetEnumerator()
-    {
-        return segments.GetEnumerator();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    public void Add(LongSegment item)
-    {
-        if (item.IsEmpty) return;
-        // TODO: Optimize
-        var newSegments = new List<LongSegment>();
-        var merged = item;
-        var mergedAdded = false;
-        foreach (var segment in segments)
-        {
-            if (segment.End < merged.Start)
-            {
-                newSegments.Add(segment);
-            }
-            else if (segment.Start > merged.End)
-            {
-                if (!mergedAdded)
-                {
-                    newSegments.Add(merged);
-                    mergedAdded = true;
-                }
-                newSegments.Add(segment);
-            }
-            else
-            {
-                merged = merged.Merge(segment);
-            }
-        }
-
-        if (!mergedAdded)
-        {
-            newSegments.Add(merged);
-        }
-
-        segments = newSegments;
-    }
-
-    public void Clear()
-    {
-        segments.Clear();
-    }
-
-    public bool Contains(LongSegment item)
-    {
-        return segments.Contains(item);
-    }
-
-    public void CopyTo(LongSegment[] array, int arrayIndex)
-    {
-        segments.CopyTo(array, arrayIndex);
-    }
-
-    public int Count => segments.Count;
 }

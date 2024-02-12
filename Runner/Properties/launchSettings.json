@@ -2,7 +2,7 @@
   "profiles": {
     "Runner": {
       "commandName": "Project",
-      "commandLineArgs": "aoc 2023 day5 -s step1 -w 2"
+      "commandLineArgs": "aoc 2023 day5 -s step2show"
     }
   }
 }
