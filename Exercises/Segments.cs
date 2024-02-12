@@ -49,7 +49,7 @@ public interface ISegmentSet<TSegment> :
     ISegmentSet<TSegment> Subtraction(TSegment newSegment);
     bool Subtract(TSegment newSegment);
 
-    // TODO: Remove, RemoveRange, Contains, Intersect, Union, Substract, Bounding
+    // TODO: RemoveRange, Contains, Bounding
 }
 
 public readonly struct Segment<TElement>
