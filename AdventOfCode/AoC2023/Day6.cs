@@ -1,8 +1,5 @@
 using Exercises;
 using Spectre.Console;
-using System;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace AoC2023;
